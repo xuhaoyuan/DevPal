@@ -12,6 +12,8 @@ targets:
     platform: macOS
     sources:
       - path: DevPal
+        excludes:
+          - "**/*.md"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.devpal.app

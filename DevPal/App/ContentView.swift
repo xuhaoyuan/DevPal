@@ -6,22 +6,21 @@ struct ContentView: View {
 
     enum Feature: String, CaseIterable, Identifiable {
         case ssh = "SSH 管理"
-        // Future features:
-        // case json = "JSON 工具"
-        // case regex = "正则测试"
-        // case hash = "哈希生成"
+        case hiddenFiles = "隐藏文件"
 
         var id: String { rawValue }
 
         var icon: String {
             switch self {
             case .ssh: return "key.fill"
+            case .hiddenFiles: return "eye.slash.fill"
             }
         }
 
         var description: String {
             switch self {
             case .ssh: return "管理 SSH 密钥与配置"
+            case .hiddenFiles: return "显示/隐藏 dotfiles"
             }
         }
     }
@@ -50,6 +49,8 @@ struct ContentView: View {
             switch selectedFeature {
             case .ssh:
                 SSHMainView()
+            case .hiddenFiles:
+                HiddenFilesMainView()
             }
         }
         .navigationTitle("DevPal")
