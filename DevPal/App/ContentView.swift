@@ -7,6 +7,7 @@ struct ContentView: View {
     enum Feature: String, CaseIterable, Identifiable {
         case ssh = "SSH 管理"
         case hiddenFiles = "隐藏文件"
+        case proxy = "网络代理"
 
         var id: String { rawValue }
 
@@ -14,6 +15,7 @@ struct ContentView: View {
             switch self {
             case .ssh: return "key.fill"
             case .hiddenFiles: return "eye.slash.fill"
+            case .proxy: return "network.badge.shield.half.filled"
             }
         }
 
@@ -21,6 +23,7 @@ struct ContentView: View {
             switch self {
             case .ssh: return "管理 SSH 密钥与配置"
             case .hiddenFiles: return "显示/隐藏 dotfiles"
+            case .proxy: return "查看/关闭系统代理"
             }
         }
     }
@@ -51,6 +54,8 @@ struct ContentView: View {
                 SSHMainView()
             case .hiddenFiles:
                 HiddenFilesMainView()
+            case .proxy:
+                ProxyMainView()
             }
         }
         .navigationTitle("DevPal")

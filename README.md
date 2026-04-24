@@ -18,6 +18,12 @@ macOS 开发者工具箱 — 将常用系统操作整合到一个轻量原生应
 - 常用隐藏目录快捷入口（~/.ssh、~/.gitconfig、~/.zshrc 等）
 - 拖拽文件管理单文件隐藏属性（chflags）
 
+### 🌐 网络代理管理
+- 查看系统代理状态（HTTP/HTTPS/SOCKS/PAC）
+- 一键关闭所有代理 / 恢复默认
+- 代理服务不可达警告（解决代理工具退出后断网）
+- 网络连通性快速诊断（DNS / 国内 / 国外）
+
 ## 构建
 
 需要安装 [XcodeGen](https://github.com/yonaskolb/XcodeGen)：
