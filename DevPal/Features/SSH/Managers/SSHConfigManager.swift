@@ -35,10 +35,10 @@ class SSHConfigManager {
         try saveConfigs(configs)
     }
 
-    /// Update an existing host config by ID
+    /// Update an existing host config by matching host name
     func updateConfig(_ config: SSHHostConfig) throws {
         var configs = try loadConfigs()
-        guard let index = configs.firstIndex(where: { $0.id == config.id }) else {
+        guard let index = configs.firstIndex(where: { $0.host == config.host }) else {
             throw NSError(domain: "SSHConfigManager", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "找不到要更新的 Host 配置"])
         }
@@ -46,10 +46,10 @@ class SSHConfigManager {
         try saveConfigs(configs)
     }
 
-    /// Remove a host config by ID
-    func removeConfig(id: UUID) throws {
+    /// Remove a host config by host name
+    func removeConfig(host: String) throws {
         var configs = try loadConfigs()
-        configs.removeAll { $0.id == id }
+        configs.removeAll { $0.host == host }
         try saveConfigs(configs)
     }
 

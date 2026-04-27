@@ -10,6 +10,7 @@ struct SSHHostConfig: Identifiable, Hashable {
     var port: Int?                           // SSH port, nil = default 22
     var identityFile: String                 // Path to private key
     var identitiesOnly: Bool                 // Only use specified key
+    var identityAgent: String?               // SSH agent socket path, "none" to disable
 
     // Advanced fields
     var preferredAuthentications: String?
@@ -48,6 +49,7 @@ struct SSHHostConfig: Identifiable, Hashable {
         port: Int? = nil,
         identityFile: String = "",
         identitiesOnly: Bool = true,
+        identityAgent: String? = nil,
         preferredAuthentications: String? = "publickey",
         forwardAgent: Bool? = nil,
         proxyCommand: String? = nil,
@@ -72,6 +74,7 @@ struct SSHHostConfig: Identifiable, Hashable {
         self.port = port
         self.identityFile = identityFile
         self.identitiesOnly = identitiesOnly
+        self.identityAgent = identityAgent
         self.preferredAuthentications = preferredAuthentications
         self.forwardAgent = forwardAgent
         self.proxyCommand = proxyCommand
@@ -105,6 +108,7 @@ struct SSHHostConfig: Identifiable, Hashable {
         if let auth = preferredAuthentications { lines.append("  PreferredAuthentications \(auth)") }
         if !identityFile.isEmpty { lines.append("  IdentityFile \(identityFile)") }
         if identitiesOnly { lines.append("  IdentitiesOnly yes") }
+        if let ia = identityAgent { lines.append("  IdentityAgent \(ia)") }
         if let fa = forwardAgent { lines.append("  ForwardAgent \(fa ? "yes" : "no")") }
         if let pc = proxyCommand { lines.append("  ProxyCommand \(pc)") }
         if let pj = proxyJump { lines.append("  ProxyJump \(pj)") }

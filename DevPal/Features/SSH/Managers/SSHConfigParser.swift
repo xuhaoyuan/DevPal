@@ -100,8 +100,8 @@ class SSHConfigParser {
     func serialize(configs: [SSHHostConfig]) -> String {
         var output: [String] = []
 
-        // Build a lookup for current configs by ID
-        let configMap = Dictionary(uniqueKeysWithValues: configs.map { ($0.id, $0) })
+        // Build a lookup for current configs by host name (unique identifier)
+        let configMap = Dictionary(uniqueKeysWithValues: configs.map { ($0.host, $0) })
 
         for block in blocks {
             switch block {
@@ -109,22 +109,21 @@ class SSHConfigParser {
                 output.append(contentsOf: lines)
 
             case .hostBlock(let original, _):
-                if let updated = configMap[original.id] {
-                    // If raw lines exist and host/fields haven't changed significantly, use raw
-                    // Otherwise regenerate
+                if let updated = configMap[original.host] {
+                    // Regenerate this host block with updated values
                     output.append(updated.toConfigText())
                 }
                 // If config was removed (not in configMap), skip it
             }
         }
 
-        // Append any new configs (IDs not in original blocks)
-        let existingIDs = Set(blocks.compactMap { block -> UUID? in
-            if case .hostBlock(let config, _) = block { return config.id }
+        // Append any new configs (hosts not in original blocks)
+        let existingHosts = Set(blocks.compactMap { block -> String? in
+            if case .hostBlock(let config, _) = block { return config.host }
             return nil
         })
 
-        for config in configs where !existingIDs.contains(config.id) {
+        for config in configs where !existingHosts.contains(config.host) {
             if !output.isEmpty && output.last != "" {
                 output.append("")
             }
@@ -188,6 +187,8 @@ class SSHConfigParser {
             config.identityFile = value
         case "identitiesonly":
             config.identitiesOnly = value.lowercased() == "yes"
+        case "identityagent":
+            config.identityAgent = value
         case "preferredauthentications":
             config.preferredAuthentications = value
         case "forwardagent":

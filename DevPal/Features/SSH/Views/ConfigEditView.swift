@@ -11,6 +11,7 @@ struct ConfigEditView: View {
     @State private var port = "22"
     @State private var identityFile = ""
     @State private var identitiesOnly = true
+    @State private var identityAgent = ""
     @State private var preferredAuth = "publickey"
 
     // Advanced
@@ -33,6 +34,7 @@ struct ConfigEditView: View {
         if !preferredAuth.isEmpty { lines.append("  PreferredAuthentications \(preferredAuth)") }
         if !identityFile.isEmpty { lines.append("  IdentityFile \(identityFile)") }
         if identitiesOnly { lines.append("  IdentitiesOnly yes") }
+        if !identityAgent.isEmpty { lines.append("  IdentityAgent \(identityAgent)") }
         if forwardAgent { lines.append("  ForwardAgent yes") }
         if !proxyCommand.isEmpty { lines.append("  ProxyCommand \(proxyCommand)") }
         if !proxyJump.isEmpty { lines.append("  ProxyJump \(proxyJump)") }
@@ -86,6 +88,30 @@ struct ConfigEditView: View {
 
                         Toggle("IdentitiesOnly (只用指定的 key)", isOn: $identitiesOnly)
                             .font(.system(size: 12))
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 4) {
+                                Text("IdentityAgent").font(.system(size: 12, weight: .medium))
+                                Image(systemName: "questionmark.circle")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                                    .help("SSH Agent 是系统后台运行的密钥代理，会缓存你用过的密钥。当你连接远程服务器时，Agent 会自动逐个尝试它缓存的所有密钥。\n\n问题：如果你有多把密钥对应同一平台的不同账号（比如两个 Codeup 账号），Agent 可能会先提供错误账号的密钥，导致认证失败。\n\n设为 none = 禁用 Agent，强制只使用 IdentityFile 指定的那把密钥，避免 Agent 自作主张。")
+                            }
+                            HStack(spacing: 8) {
+                                TextField("留空或输入 none", text: $identityAgent)
+                                    .textFieldStyle(.roundedBorder)
+                                    .font(.system(size: 12))
+                                if identityAgent.isEmpty {
+                                    Button("设为 none") { identityAgent = "none" }
+                                        .font(.system(size: 11))
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
+                                }
+                            }
+                            Text("多账号场景建议设为 none，防止 SSH Agent 自动使用错误的密钥")
+                                .font(.system(size: 10))
+                                .foregroundColor(.secondary)
+                        }
 
                         formField("PreferredAuthentications", text: $preferredAuth, placeholder: "publickey")
 
@@ -178,6 +204,7 @@ struct ConfigEditView: View {
         port = c.port.map { "\($0)" } ?? "22"
         identityFile = c.identityFile
         identitiesOnly = c.identitiesOnly
+        identityAgent = c.identityAgent ?? ""
         preferredAuth = c.preferredAuthentications ?? "publickey"
         forwardAgent = c.forwardAgent ?? false
         proxyCommand = c.proxyCommand ?? ""
@@ -196,6 +223,7 @@ struct ConfigEditView: View {
         newConfig.port = Int(port)
         newConfig.identityFile = identityFile
         newConfig.identitiesOnly = identitiesOnly
+        newConfig.identityAgent = identityAgent.isEmpty ? nil : identityAgent
         newConfig.preferredAuthentications = preferredAuth.isEmpty ? nil : preferredAuth
         newConfig.forwardAgent = forwardAgent ? true : nil
         newConfig.proxyCommand = proxyCommand.isEmpty ? nil : proxyCommand

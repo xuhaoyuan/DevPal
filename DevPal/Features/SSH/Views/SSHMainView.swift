@@ -9,14 +9,24 @@ struct SSHMainView: View {
         case keys = "密钥管理"
         case config = "Host 配置"
         case test = "连通测试"
+        case repos = "仓库扫描"
+        case knownHosts = "known_hosts"
+        case identity = "Git 身份"
+        case source = "源码模式"
         case backup = "备份恢复"
+        case guide = "帮助文档"
 
         var icon: String {
             switch self {
             case .keys: return "key.fill"
             case .config: return "gearshape.fill"
             case .test: return "network"
+            case .repos: return "folder.badge.gearshape"
+            case .knownHosts: return "list.bullet.rectangle.portrait"
+            case .identity: return "person.2.fill"
+            case .source: return "doc.text"
             case .backup: return "externaldrive.fill"
+            case .guide: return "book.fill"
             }
         }
     }
@@ -24,24 +34,27 @@ struct SSHMainView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Tab bar
-            HStack(spacing: 2) {
-                ForEach(SSHTab.allCases, id: \.self) { tab in
-                    Button {
-                        selectedTab = tab
-                    } label: {
-                        Label(tab.rawValue, systemImage: tab.icon)
-                            .font(.system(size: 12))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
-                            )
-                            .foregroundColor(selectedTab == tab ? .accentColor : .secondary)
+            HStack(spacing: 4) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 2) {
+                        ForEach(SSHTab.allCases, id: \.self) { tab in
+                            Button {
+                                selectedTab = tab
+                            } label: {
+                                Label(tab.rawValue, systemImage: tab.icon)
+                                    .font(.system(size: 12))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .fill(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
+                                    )
+                                    .foregroundColor(selectedTab == tab ? .accentColor : .secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
-                    .buttonStyle(.plain)
                 }
-                Spacer()
                 Button {
                     Task { await viewModel.refresh() }
                 } label: {
@@ -79,8 +92,18 @@ struct SSHMainView: View {
                     ConfigListView(viewModel: viewModel)
                 case .test:
                     ConnectionTestView(viewModel: viewModel)
+                case .repos:
+                    RepoScanView(viewModel: viewModel)
+                case .knownHosts:
+                    KnownHostsView(viewModel: viewModel)
+                case .identity:
+                    GitIdentityView(viewModel: viewModel)
+                case .source:
+                    ConfigSourceView(viewModel: viewModel)
                 case .backup:
                     BackupView(viewModel: viewModel)
+                case .guide:
+                    SSHGuideView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

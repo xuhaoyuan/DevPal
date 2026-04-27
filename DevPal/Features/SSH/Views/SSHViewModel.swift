@@ -9,6 +9,7 @@ class SSHViewModel: ObservableObject {
     @Published var keys: [SSHKey] = []
     @Published var configs: [SSHHostConfig] = []
     @Published var testResults: [String: ConnectionTestResult] = [:]
+    @Published var urlRewriteRules: [GitConfigManager.URLRewriteRule] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
@@ -24,6 +25,7 @@ class SSHViewModel: ObservableObject {
     private let keyManager = SSHKeyManager.shared
     private let configManager = SSHConfigManager.shared
     private let testRunner = SSHTestRunner.shared
+    private let gitConfigManager = GitConfigManager.shared
 
     // MARK: - Init
 
@@ -55,6 +57,9 @@ class SSHViewModel: ObservableObject {
             }
             keys = loadedKeys
 
+            // Load git URL rewrite rules
+            urlRewriteRules = await gitConfigManager.loadURLRewriteRules()
+
             // Check permissions
             checkPermissions()
         } catch {
@@ -80,9 +85,7 @@ class SSHViewModel: ObservableObject {
         do {
             if cleanupConfig {
                 for host in key.referencedByHosts {
-                    if let config = configs.first(where: { $0.host == host }) {
-                        try configManager.removeConfig(id: config.id)
-                    }
+                    try configManager.removeConfig(host: host)
                 }
             }
             try keyManager.deleteKey(key)
@@ -129,7 +132,7 @@ class SSHViewModel: ObservableObject {
 
     func removeConfig(_ config: SSHHostConfig) async {
         do {
-            try configManager.removeConfig(id: config.id)
+            try configManager.removeConfig(host: config.host)
             await refresh()
             successMessage = "Host \(config.host) 已删除"
         } catch {
@@ -187,5 +190,53 @@ class SSHViewModel: ObservableObject {
     /// List available private keys for IdentityFile picker
     func availablePrivateKeys() -> [(name: String, path: String, type: SSHKeyType)] {
         keys.map { ($0.name, $0.privateKeyPath, $0.type) }
+    }
+
+    // MARK: - URL Rewrite Rules
+
+    func addURLRewriteRule(from: String, to: String) async {
+        do {
+            try await gitConfigManager.addURLRewriteRule(from: from, to: to)
+            await refresh()
+            successMessage = "URL 重写规则已添加"
+        } catch {
+            errorMessage = "添加失败: \(error.localizedDescription)"
+        }
+    }
+
+    func removeURLRewriteRule(_ rule: GitConfigManager.URLRewriteRule) async {
+        do {
+            try await gitConfigManager.removeURLRewriteRule(from: rule.from, to: rule.to)
+            await refresh()
+            successMessage = "URL 重写规则已删除"
+        } catch {
+            errorMessage = "删除失败: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Conflict Detection
+
+    /// Find configs that share the same HostName but use different Host aliases
+    /// This indicates a multi-account setup (or potential misconfiguration)
+    func hostnameConflicts() -> [String: [SSHHostConfig]] {
+        var grouped: [String: [SSHHostConfig]] = [:]
+        for config in configs where !config.isGlobal && !config.hostName.isEmpty {
+            grouped[config.hostName, default: []].append(config)
+        }
+        return grouped.filter { $0.value.count > 1 }
+    }
+
+    /// Check if any multi-account configs are missing IdentityAgent=none
+    func configsMissingIdentityAgent() -> [SSHHostConfig] {
+        let conflicts = hostnameConflicts()
+        var result: [SSHHostConfig] = []
+        for (_, configs) in conflicts {
+            for config in configs {
+                if config.identityAgent == nil || config.identityAgent != "none" {
+                    result.append(config)
+                }
+            }
+        }
+        return result
     }
 }
