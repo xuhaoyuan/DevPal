@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Resolve SPM Dependencies
+        run: xcodebuild -resolvePackageDependencies -project DevPal.xcodeproj -scheme DevPal
+
+      - name: Build
+        run: |
+          xcodebuild -project DevPal.xcodeproj \
+            -scheme DevPal \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            build
+
+      - name: Create DMG
+        run: |
+          APP_PATH="build/Build/Products/Release/DevPal.app"
+          # Create a temporary DMG folder
+          mkdir -p dmg_contents
+          cp -R "$APP_PATH" dmg_contents/
+          ln -s /Applications dmg_contents/Applications
+          # Create DMG
+          hdiutil create -volname "DevPal" \
+            -srcfolder dmg_contents \
+            -ov -format UDZO \
+            "DevPal-${GITHUB_REF_NAME}.dmg"
+
+      - name: Generate appcast.xml
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          BUILD=$(date +%Y%m%d%H%M)
+          DMG_FILE="DevPal-${GITHUB_REF_NAME}.dmg"
+          DMG_SIZE=$(stat -f%z "$DMG_FILE")
+
+          cat > appcast.xml << EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+            <channel>
+              <title>DevPal Updates</title>
+              <language>zh-CN</language>
+              <item>
+                <title>Version ${VERSION}</title>
+                <sparkle:version>${BUILD}</sparkle:version>
+                <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+                <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+                <pubDate>$(date -R)</pubDate>
+                <enclosure
+                  url="https://github.com/xuhaoyuan/DevPal/releases/download/${GITHUB_REF_NAME}/${DMG_FILE}"
+                  length="${DMG_SIZE}"
+                  type="application/octet-stream"
+                  sparkle:edSignature=""
+                />
+              </item>
+            </channel>
+          </rss>
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            DevPal-${{ github.ref_name }}.dmg
+            appcast.xml
