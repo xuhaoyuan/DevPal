@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Main content view — sidebar navigation for different tool features
 struct ContentView: View {
-    @State private var selectedFeature: Feature = .ssh
+    @State private var selectedFeature: Feature? = nil
     @State private var featureOrder: [Feature] = {
         if let saved = UserDefaults.standard.array(forKey: "sidebarOrder") as? [String] {
             let mapped = saved.compactMap { Feature(rawValue: $0) }.filter { $0 != .settings }
@@ -20,6 +20,7 @@ struct ContentView: View {
         case codec = "编解码"
         case hiddenFiles = "隐藏文件"
         case proxy = "网络代理"
+        case packages = "包管理"
         case settings = "设置"
 
         var id: String { rawValue }
@@ -38,6 +39,7 @@ struct ContentView: View {
             case .codec: return "lock.rotation"
             case .hiddenFiles: return "eye.slash.fill"
             case .proxy: return "network.badge.shield.half.filled"
+            case .packages: return "shippingbox.fill"
             case .settings: return "gearshape"
             }
         }
@@ -51,6 +53,7 @@ struct ContentView: View {
             case .codec: return "Base64 / URL / JWT / Hash"
             case .hiddenFiles: return "显示/隐藏 dotfiles"
             case .proxy: return "查看/关闭系统代理"
+            case .packages: return "查看本地包管理器与已安装包"
             case .settings: return "版本信息与偏好设置"
             }
         }
@@ -132,10 +135,21 @@ struct ContentView: View {
                 HiddenFilesMainView()
             case .proxy:
                 ProxyMainView()
+            case .packages:
+                PackageMainView()
             case .settings:
                 SettingsView()
+            case nil:
+                Text("请选择一个功能")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
             }
         }
         .navigationTitle("DevPal")
+        .onAppear {
+            if selectedFeature == nil {
+                selectedFeature = featureOrder.first
+            }
+        }
     }
 }

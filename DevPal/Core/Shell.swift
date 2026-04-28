@@ -82,8 +82,8 @@ actor Shell {
         }
     }
 
-    /// Convenience: run /bin/zsh -c "command string"
+    /// Convenience: run /bin/zsh -l -c "command string" (login shell to load user PATH)
     static func run(_ commandString: String, timeout: TimeInterval = 30) async throws -> Result {
-        try await execute("/bin/zsh", arguments: ["-c", commandString], timeout: timeout)
+        try await execute("/bin/zsh", arguments: ["-l", "-c", commandString], timeout: timeout)
     }
 }
