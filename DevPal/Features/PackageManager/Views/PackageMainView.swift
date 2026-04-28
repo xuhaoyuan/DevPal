@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PackageMainView: View {
-    @StateObject private var viewModel = PackageViewModel()
+    @ObservedObject var viewModel: PackageViewModel
 
     var body: some View {
         VStack(spacing: 0) {

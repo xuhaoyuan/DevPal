@@ -2,7 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct HiddenFilesMainView: View {
-    @StateObject private var viewModel = HiddenFilesViewModel()
+    @ObservedObject var viewModel: HiddenFilesViewModel
 
     var body: some View {
         VStack(spacing: 0) {

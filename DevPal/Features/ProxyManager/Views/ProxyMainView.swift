@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ProxyMainView: View {
-    @StateObject private var viewModel = ProxyViewModel()
+    @ObservedObject var viewModel: ProxyViewModel
 
     var body: some View {
         VStack(spacing: 0) {

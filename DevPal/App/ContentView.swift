@@ -2,6 +2,10 @@ import SwiftUI
 
 /// Main content view — sidebar navigation for different tool features
 struct ContentView: View {
+    @StateObject private var sshViewModel = SSHViewModel()
+    @StateObject private var hiddenFilesViewModel = HiddenFilesViewModel()
+    @StateObject private var proxyViewModel = ProxyViewModel()
+    @StateObject private var packageViewModel = PackageViewModel()
     @State private var selectedFeature: Feature? = nil
     @State private var featureOrder: [Feature] = {
         if let saved = UserDefaults.standard.array(forKey: "sidebarOrder") as? [String] {
@@ -122,7 +126,7 @@ struct ContentView: View {
         } detail: {
             switch selectedFeature {
             case .ssh:
-                SSHMainView()
+                SSHMainView(viewModel: sshViewModel)
             case .ports:
                 PortManagerView()
             case .env:
@@ -132,11 +136,11 @@ struct ContentView: View {
             case .codec:
                 CodecToolsView()
             case .hiddenFiles:
-                HiddenFilesMainView()
+                HiddenFilesMainView(viewModel: hiddenFilesViewModel)
             case .proxy:
-                ProxyMainView()
+                ProxyMainView(viewModel: proxyViewModel)
             case .packages:
-                PackageMainView()
+                PackageMainView(viewModel: packageViewModel)
             case .settings:
                 SettingsView()
             case nil:

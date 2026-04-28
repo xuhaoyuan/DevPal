@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Main SSH feature view with sidebar navigation
 struct SSHMainView: View {
-    @StateObject private var viewModel = SSHViewModel()
+    @ObservedObject var viewModel: SSHViewModel
     @State private var selectedTab: SSHTab = .keys
 
     enum SSHTab: String, CaseIterable {
