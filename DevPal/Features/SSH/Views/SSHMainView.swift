@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Main SSH feature view with tab navigation
+/// Main SSH feature view with sidebar navigation
 struct SSHMainView: View {
     @StateObject private var viewModel = SSHViewModel()
     @State private var selectedTab: SSHTab = .keys
@@ -29,47 +29,24 @@ struct SSHMainView: View {
             case .guide: return "book.fill"
             }
         }
+
+        var subtitle: String {
+            switch self {
+            case .keys: return "查看/生成 SSH 密钥"
+            case .config: return "编辑 Host 配置项"
+            case .test: return "测试 SSH 连接"
+            case .repos: return "扫描 Git 仓库"
+            case .knownHosts: return "管理已知主机"
+            case .identity: return "Git includeIf 身份"
+            case .source: return "直接编辑 config"
+            case .backup: return "备份与恢复"
+            case .guide: return "SSH 使用指南"
+            }
+        }
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Tab bar
-            HStack(spacing: 4) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 2) {
-                        ForEach(SSHTab.allCases, id: \.self) { tab in
-                            Button {
-                                selectedTab = tab
-                            } label: {
-                                Label(tab.rawValue, systemImage: tab.icon)
-                                    .font(.system(size: 12))
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .fill(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
-                                    )
-                                    .foregroundColor(selectedTab == tab ? .accentColor : .secondary)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                Button {
-                    Task { await viewModel.refresh() }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 12))
-                }
-                .buttonStyle(.plain)
-                .help("刷新")
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color(nsColor: .windowBackgroundColor))
-
-            Divider()
-
             // Permission warning bar
             if !viewModel.sshDirPermissionOK || !viewModel.badPermissionKeys.isEmpty {
                 permissionWarningBar
@@ -83,35 +60,92 @@ struct SSHMainView: View {
                 messageBar(text: success, isError: false)
             }
 
-            // Content
-            Group {
-                switch selectedTab {
-                case .keys:
-                    KeyListView(viewModel: viewModel)
-                case .config:
-                    ConfigListView(viewModel: viewModel)
-                case .test:
-                    ConnectionTestView(viewModel: viewModel)
-                case .repos:
-                    RepoScanView(viewModel: viewModel)
-                case .knownHosts:
-                    KnownHostsView(viewModel: viewModel)
-                case .identity:
-                    GitIdentityView(viewModel: viewModel)
-                case .source:
-                    ConfigSourceView(viewModel: viewModel)
-                case .backup:
-                    BackupView(viewModel: viewModel)
-                case .guide:
-                    SSHGuideView()
+            PersistentSplitView(id: "ssh", minWidth: 120, maxWidth: 220, defaultWidth: 150) {
+                // Sidebar
+                VStack(spacing: 2) {
+                    ForEach(SSHTab.allCases, id: \.self) { tab in
+                        Button {
+                            selectedTab = tab
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: tab.icon)
+                                    .font(.system(size: 12))
+                                    .frame(width: 18)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(tab.rawValue)
+                                        .font(.system(size: 12, weight: .medium))
+                                    Text(tab.subtitle)
+                                        .font(.system(size: 9))
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 6)
+                            .contentShape(Rectangle())
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
+                            )
+                            .foregroundColor(selectedTab == tab ? .accentColor : .primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    Spacer()
+
+                    // Refresh button at bottom
+                    Button {
+                        Task { await viewModel.refresh() }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 11))
+                            Text("刷新")
+                                .font(.system(size: 11))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 5)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .padding(8)
+                .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+            } content: {
+                // Content
+                VStack(spacing: 0) {
+                    Group {
+                        switch selectedTab {
+                        case .keys:
+                            KeyListView(viewModel: viewModel)
+                        case .config:
+                            ConfigListView(viewModel: viewModel)
+                        case .test:
+                            ConnectionTestView(viewModel: viewModel)
+                        case .repos:
+                            RepoScanView(viewModel: viewModel)
+                        case .knownHosts:
+                            KnownHostsView(viewModel: viewModel)
+                        case .identity:
+                            GitIdentityView(viewModel: viewModel)
+                        case .source:
+                            ConfigSourceView(viewModel: viewModel)
+                        case .backup:
+                            BackupView(viewModel: viewModel)
+                        case .guide:
+                            SSHGuideView()
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                    Divider()
+
+                    // Status bar
+                    statusBar
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            Divider()
-
-            // Status bar
-            statusBar
         }
     }
 

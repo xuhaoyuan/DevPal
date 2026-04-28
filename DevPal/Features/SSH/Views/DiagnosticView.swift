@@ -83,13 +83,7 @@ struct DiagnosticView: View {
 
                 if showRawOutput {
                     // Raw output
-                    ScrollView {
-                        Text(rawOutput)
-                            .font(.system(size: 11, design: .monospaced))
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(12)
-                    }
+                    ReadOnlyTextView(text: rawOutput, font: .monospacedSystemFont(ofSize: 11, weight: .regular))
                 } else {
                     // Parsed steps
                     ScrollView {

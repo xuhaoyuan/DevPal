@@ -9,7 +9,6 @@ struct JSONToolsView: View {
     @State private var errorMessage: String?
     @State private var stats: JSONStats?
     @State private var copied = false
-    @State private var highlightedOutput: AttributedString = AttributedString()
 
     enum IndentSize: Int, CaseIterable, Identifiable {
         case zero = 0, two = 2, four = 4, tab = -1
@@ -175,12 +174,7 @@ struct JSONToolsView: View {
                 }
                 .background(Color.red.opacity(0.05))
             } else {
-                ScrollView {
-                    Text(highlightedOutput)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(8)
-                }
+                ReadOnlyTextView(text: outputText, font: .monospacedSystemFont(ofSize: 12, weight: .regular))
             }
         }
     }
@@ -210,7 +204,6 @@ struct JSONToolsView: View {
         errorMessage = nil
         stats = nil
         outputText = ""
-        highlightedOutput = AttributedString()
 
         let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -238,7 +231,6 @@ struct JSONToolsView: View {
             }
 
             outputText = result
-            highlightedOutput = syntaxHighlightJSON(result)
             stats = analyze(obj, originalSize: outData.count)
         } catch {
             errorMessage = "JSON 解析失败: \(error.localizedDescription)"
@@ -273,106 +265,6 @@ struct JSONToolsView: View {
         if bytes < 1024 { return "\(bytes) B" }
         if bytes < 1024 * 1024 { return String(format: "%.1f KB", Double(bytes) / 1024) }
         return String(format: "%.2f MB", Double(bytes) / 1024 / 1024)
-    }
-
-    // MARK: - Syntax Highlighting
-
-    private func syntaxHighlightJSON(_ json: String) -> AttributedString {
-        var result = AttributedString()
-        let chars = Array(json)
-        var i = 0
-        let count = chars.count
-
-        let keyColor = Color(nsColor: .systemPurple)
-        let stringColor = Color(nsColor: .systemGreen)
-        let numberColor = Color(nsColor: .systemOrange)
-        let boolColor = Color(nsColor: .systemTeal)
-        let nullColor = Color.secondary
-        let bracketColor = Color.primary.opacity(0.7)
-
-        while i < count {
-            let ch = chars[i]
-
-            if ch == "\"" {
-                // Parse string token
-                var str = "\""
-                i += 1
-                while i < count {
-                    let c = chars[i]
-                    str.append(c)
-                    if c == "\\" {
-                        i += 1
-                        if i < count { str.append(chars[i]) }
-                    } else if c == "\"" {
-                        i += 1
-                        break
-                    }
-                    i += 1
-                }
-                // Look ahead: key if followed by ':'
-                var j = i
-                while j < count && (chars[j] == " " || chars[j] == "\t" || chars[j] == "\n" || chars[j] == "\r") { j += 1 }
-                let isKey = j < count && chars[j] == ":"
-
-                var attr = AttributedString(str)
-                attr.font = .system(size: 12, design: .monospaced)
-                attr.foregroundColor = isKey ? keyColor : stringColor
-                if isKey { attr.font = .system(size: 12, weight: .medium, design: .monospaced) }
-                result.append(attr)
-                continue
-
-            } else if (ch == "t" && json[json.index(json.startIndex, offsetBy: i)...].hasPrefix("true")) {
-                var attr = AttributedString("true")
-                attr.font = .system(size: 12, design: .monospaced)
-                attr.foregroundColor = boolColor
-                result.append(attr)
-                i += 4
-                continue
-
-            } else if (ch == "f" && json[json.index(json.startIndex, offsetBy: i)...].hasPrefix("false")) {
-                var attr = AttributedString("false")
-                attr.font = .system(size: 12, design: .monospaced)
-                attr.foregroundColor = boolColor
-                result.append(attr)
-                i += 5
-                continue
-
-            } else if (ch == "n" && json[json.index(json.startIndex, offsetBy: i)...].hasPrefix("null")) {
-                var attr = AttributedString("null")
-                attr.font = .system(size: 12, design: .monospaced)
-                attr.foregroundColor = nullColor
-                result.append(attr)
-                i += 4
-                continue
-
-            } else if ch == "-" || ch.isNumber {
-                var num = String(ch)
-                i += 1
-                while i < count && (chars[i].isNumber || chars[i] == "." || chars[i] == "e" || chars[i] == "E" || chars[i] == "+" || chars[i] == "-") {
-                    num.append(chars[i])
-                    i += 1
-                }
-                var attr = AttributedString(num)
-                attr.font = .system(size: 12, design: .monospaced)
-                attr.foregroundColor = numberColor
-                result.append(attr)
-                continue
-
-            } else if ch == "{" || ch == "}" || ch == "[" || ch == "]" {
-                var attr = AttributedString(String(ch))
-                attr.font = .system(size: 12, weight: .semibold, design: .monospaced)
-                attr.foregroundColor = bracketColor
-                result.append(attr)
-
-            } else {
-                var attr = AttributedString(String(ch))
-                attr.font = .system(size: 12, design: .monospaced)
-                result.append(attr)
-            }
-            i += 1
-        }
-
-        return result
     }
 
     private let sampleJSON = """

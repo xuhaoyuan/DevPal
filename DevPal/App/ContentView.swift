@@ -5,12 +5,11 @@ struct ContentView: View {
     @State private var selectedFeature: Feature = .ssh
     @State private var featureOrder: [Feature] = {
         if let saved = UserDefaults.standard.array(forKey: "sidebarOrder") as? [String] {
-            let mapped = saved.compactMap { Feature(rawValue: $0) }
-            // Append any new features not yet in saved order
-            let remaining = Feature.allCases.filter { !mapped.contains($0) }
+            let mapped = saved.compactMap { Feature(rawValue: $0) }.filter { $0 != .settings }
+            let remaining = Feature.toolCases.filter { !mapped.contains($0) }
             return mapped + remaining
         }
-        return Feature.allCases
+        return Feature.toolCases
     }()
 
     enum Feature: String, CaseIterable, Identifiable {
@@ -24,6 +23,11 @@ struct ContentView: View {
         case settings = "设置"
 
         var id: String { rawValue }
+
+        /// Features shown in the draggable sidebar list (excludes settings)
+        static var toolCases: [Feature] {
+            allCases.filter { $0 != .settings }
+        }
 
         var icon: String {
             switch self {
@@ -54,29 +58,63 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selectedFeature) {
-                ForEach(featureOrder) { feature in
-                    Label {
+            VStack(spacing: 0) {
+                List(selection: $selectedFeature) {
+                    ForEach(featureOrder) { feature in
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(feature.rawValue)
+                                    .font(.system(size: 13))
+                                Text(feature.description)
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: feature.icon)
+                                .foregroundColor(.accentColor)
+                        }
+                        .tag(feature)
+                        .padding(.vertical, 4)
+                    }
+                    .onMove { source, destination in
+                        featureOrder.move(fromOffsets: source, toOffset: destination)
+                        UserDefaults.standard.set(featureOrder.map(\.rawValue), forKey: "sidebarOrder")
+                    }
+                }
+                .listStyle(.sidebar)
+
+                Divider()
+
+                Button {
+                    selectedFeature = .settings
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: Feature.settings.icon)
+                            .font(.system(size: 13))
+                            .foregroundColor(selectedFeature == .settings ? .accentColor : .secondary)
+                            .frame(width: 20)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(feature.rawValue)
+                            Text(Feature.settings.rawValue)
                                 .font(.system(size: 13))
-                            Text(feature.description)
+                            Text(Feature.settings.description)
                                 .font(.system(size: 10))
                                 .foregroundColor(.secondary)
                         }
-                    } icon: {
-                        Image(systemName: feature.icon)
-                            .foregroundColor(.accentColor)
+                        Spacer()
                     }
-                    .tag(feature)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(selectedFeature == .settings ? Color.accentColor.opacity(0.15) : Color.clear)
+                    )
+                    .foregroundColor(selectedFeature == .settings ? .accentColor : .primary)
                 }
-                .onMove { source, destination in
-                    featureOrder.move(fromOffsets: source, toOffset: destination)
-                    UserDefaults.standard.set(featureOrder.map(\.rawValue), forKey: "sidebarOrder")
-                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
             }
-            .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 160, ideal: 190, max: 240)
         } detail: {
             switch selectedFeature {

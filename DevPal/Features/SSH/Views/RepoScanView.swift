@@ -38,6 +38,26 @@ struct RepoScanView: View {
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12))
                         .frame(width: 180)
+                    Button {
+                        let panel = NSOpenPanel()
+                        panel.canChooseFiles = false
+                        panel.canChooseDirectories = true
+                        panel.allowsMultipleSelection = false
+                        panel.prompt = "选择"
+                        panel.message = "选择要扫描的文件夹"
+                        if let expanded = scanPath.isEmpty ? nil : NSString(string: scanPath).expandingTildeInPath as String? {
+                            panel.directoryURL = URL(fileURLWithPath: expanded)
+                        }
+                        if panel.runModal() == .OK, let url = panel.url {
+                            scanPath = url.path.replacingOccurrences(of: NSHomeDirectory(), with: "~")
+                        }
+                    } label: {
+                        Image(systemName: "folder.badge.plus")
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help("选择文件夹")
                 }
 
                 Button {

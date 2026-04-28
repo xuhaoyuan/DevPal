@@ -55,6 +55,11 @@ struct SettingsView: View {
                 // Data
                 dataSection
 
+                Divider()
+
+                // Contact
+                contactSection
+
                 Spacer()
             }
             .padding(24)
@@ -69,10 +74,17 @@ struct SettingsView: View {
                 .font(.system(size: 16, weight: .semibold))
 
             HStack(spacing: 16) {
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .frame(width: 64, height: 64)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                if let icon = NSImage(named: "AppIcon") {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .frame(width: 64, height: 64)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                } else {
+                    Image(systemName: "wrench.and.screwdriver")
+                        .font(.system(size: 36))
+                        .frame(width: 64, height: 64)
+                        .foregroundColor(.accentColor)
+                }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("DevPal")
@@ -157,6 +169,37 @@ struct SettingsView: View {
             }
 
             Text("DevPal 不收集任何用户数据，所有操作均在本地完成。")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+        }
+    }
+
+    // MARK: - Contact
+
+    private var contactSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("联系与反馈", systemImage: "bubble.left.and.bubble.right")
+                .font(.system(size: 16, weight: .semibold))
+
+            HStack(spacing: 12) {
+                Button {
+                    NSWorkspace.shared.open(URL(string: "https://github.com/xuhaoyuan/DevPal")!)
+                } label: {
+                    Label("GitHub 仓库", systemImage: "link")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
+                Button {
+                    NSWorkspace.shared.open(URL(string: "https://github.com/xuhaoyuan/DevPal/issues")!)
+                } label: {
+                    Label("提交 Issue", systemImage: "exclamationmark.bubble")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+
+            Text("欢迎在 GitHub 上提交问题、建议或 Pull Request。")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
         }

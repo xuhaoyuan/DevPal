@@ -36,7 +36,7 @@ struct CodecToolsView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        PersistentSplitView(id: "codec", minWidth: 120, maxWidth: 220, defaultWidth: 150) {
             // Sidebar
             VStack(spacing: 2) {
                 ForEach(Tool.allCases) { tool in
@@ -58,6 +58,7 @@ struct CodecToolsView: View {
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 6)
+                        .contentShape(Rectangle())
                         .background(
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(selectedTool == tool ? Color.accentColor.opacity(0.15) : Color.clear)
@@ -69,11 +70,8 @@ struct CodecToolsView: View {
                 Spacer()
             }
             .padding(8)
-            .frame(width: 150)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
-
-            Divider()
-
+        } content: {
             // Detail
             Group {
                 switch selectedTool {
@@ -184,14 +182,7 @@ private struct OutputPane: View {
                 }
                 .background(Color.red.opacity(0.05))
             } else {
-                ScrollView {
-                    Text(content.isEmpty ? "（无输出）" : content)
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundColor(content.isEmpty ? .secondary : .primary)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(8)
-                }
+                ReadOnlyTextView(text: content.isEmpty ? "（无输出）" : content, font: .monospacedSystemFont(ofSize: 12, weight: .regular))
             }
         }
     }

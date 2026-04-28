@@ -13,41 +13,63 @@ struct EnvManagerView: View {
             case .guide: return "book.fill"
             }
         }
+        var subtitle: String {
+            switch self {
+            case .variables: return "查看当前环境变量"
+            case .path: return "检测断链与重复"
+            case .profiles: return "编辑 shell 配置"
+            case .guide: return "功能使用指南"
+            }
+        }
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 4) {
+        PersistentSplitView(id: "env", minWidth: 120, maxWidth: 220, defaultWidth: 150) {
+            // Sidebar
+            VStack(spacing: 2) {
                 ForEach(Tab.allCases, id: \.self) { tab in
                     Button {
                         selectedTab = tab
                     } label: {
-                        Label(tab.rawValue, systemImage: tab.icon)
-                            .font(.system(size: 12))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
-                            )
-                            .foregroundColor(selectedTab == tab ? .accentColor : .secondary)
+                        HStack(spacing: 8) {
+                            Image(systemName: tab.icon)
+                                .font(.system(size: 12))
+                                .frame(width: 18)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(tab.rawValue)
+                                    .font(.system(size: 12, weight: .medium))
+                                Text(tab.subtitle)
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .contentShape(Rectangle())
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
+                        )
+                        .foregroundColor(selectedTab == tab ? .accentColor : .primary)
                     }
                     .buttonStyle(.plain)
                 }
                 Spacer()
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color(nsColor: .windowBackgroundColor))
-
-            Divider()
-
-            switch selectedTab {
-            case .variables: EnvVariablesTab()
-            case .path: PathAnalysisTab()
-            case .profiles: ProfilesTab()
-            case .guide: EnvGuideTab()
+            .padding(8)
+            .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+        } content: {
+            // Content
+            Group {
+                switch selectedTab {
+                case .variables: EnvVariablesTab()
+                case .path: PathAnalysisTab()
+                case .profiles: ProfilesTab()
+                case .guide: EnvGuideTab()
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
@@ -387,7 +409,7 @@ private struct ProfilesTab: View {
     var hasChanges: Bool { content != originalContent }
 
     var body: some View {
-        HStack(spacing: 0) {
+        PersistentSplitView(id: "profiles", minWidth: 140, maxWidth: 260, defaultWidth: 180) {
             // Left: profile list
             VStack(spacing: 0) {
                 Text("Profile 文件")
@@ -431,6 +453,7 @@ private struct ProfilesTab: View {
                                 }
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 5)
+                                .contentShape(Rectangle())
                                 .background(
                                     RoundedRectangle(cornerRadius: 5)
                                         .fill(selectedProfile?.path == profile.path ? Color.accentColor.opacity(0.15) : Color.clear)
@@ -442,11 +465,9 @@ private struct ProfilesTab: View {
                     .padding(.horizontal, 6)
                 }
             }
-            .frame(width: 180)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
 
-            Divider()
-
+            } content: {
             // Right: editor
             VStack(spacing: 0) {
                 if let profile = selectedProfile {

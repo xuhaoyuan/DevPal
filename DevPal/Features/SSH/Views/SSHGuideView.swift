@@ -62,6 +62,7 @@ struct SSHGuideView: View {
                                 }
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 5)
+                                .contentShape(Rectangle())
                                 .background(
                                     RoundedRectangle(cornerRadius: 5)
                                         .fill(selectedSection == section ? Color.accentColor.opacity(0.15) : Color.clear)
